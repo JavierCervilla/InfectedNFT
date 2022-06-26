@@ -14,16 +14,36 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const Logic = await hre.ethers.getContractFactory("YOUR_LOGIC_CONTRACT_NAME");
+  const Logic = await hre.ethers.getContractFactory("InfectedNFT");
   const Proxy = await hre.ethers.getContractFactory("Proxy");
 
   const logic = await Logic.deploy();
   await logic.deployed();
   console.log("Logic deployed to:", logic.address);
 
-  const proxy = await Proxy.deploy(logic.address);
+  const proxy = await Proxy.deploy(logic.address, "https://raw.githubusercontent.com/ImagiNFT/SampleTokensRewards/main/tokens/{id}.json", "https://raw.githubusercontent.com/ImagiNFT/SampleTokensRewards/main/contract.json");
   await proxy.deployed();
   console.log("Proxy deployed (and initialized) to:", proxy.address);
+
+
+  // we wait for 5 confirmations blocks before verify to avoid propagation delays
+  await proxy.deployTransaction.wait(5);
+  await logic.deployTransaction.wait(5);
+
+  // we use the task "verify:verify" to verify the contract programatically on etherscan
+  await hre.run("verify:verify", {
+    address: logic.address,
+    constructorArguments: []
+  });
+
+  await hre.run("verify:verify", {
+    address: proxy.address,
+    constructorArguments: [
+      logic.address,
+      "https://raw.githubusercontent.com/ImagiNFT/SampleTokensRewards/main/tokens/{id}.json",
+      "https://raw.githubusercontent.com/ImagiNFT/SampleTokensRewards/main/contract.json"
+    ]
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere
