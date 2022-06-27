@@ -59,9 +59,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgrad
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "./interfaces/IERC2981.sol";
 
-contract InfectedNFT is
-    ERC1155Upgradeable,
-    IERC2981 /*TODO: 1155D*/
+contract InfectedNFT is ERC1155Upgradeable, IERC2981 /*TODO: 1155D*/
 {
     address public admin;
 
@@ -71,7 +69,7 @@ contract InfectedNFT is
 
     bool public paused;
 
-    uint256 public maxNFTPublic = 2;
+    uint256 public constant maxNFTPublic = 2;
 
     uint256 public constant zeroPatientSupply = 100;
 
@@ -81,11 +79,7 @@ contract InfectedNFT is
 
     event InfectedMint(uint256 infectedNFT, uint256 infectedBy);
 
-    function initialize(string memory _metadata, string memory _contractURI)
-        public
-        virtual
-        initializer
-    {
+    function initialize(string memory _metadata, string memory _contractURI) public virtual initializer {
         admin = msg.sender;
         id = 1;
         infectedId = 101;
@@ -94,24 +88,12 @@ contract InfectedNFT is
         __ERC1155_init(_metadata);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC1155Upgradeable, IERC2981)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, IERC2981) returns (bool) {
         return (ERC1155Upgradeable.supportsInterface(interfaceId) ||
             interfaceId == type(IERC2981).interfaceId);
     }
 
-    function royaltyInfo(uint256 tokenId, uint256 _salePrice)
-        external
-        view
-        virtual
-        override
-        returns (address _receiver, uint256 _royaltyAmount)
-    {
+    function royaltyInfo(uint256 tokenId, uint256 _salePrice) external view virtual override returns (address _receiver, uint256 _royaltyAmount) {
         require(tokenId < id, "Error: invalid token id");
         return (owner(), (_salePrice * 1) / 100);
     }
@@ -119,18 +101,9 @@ contract InfectedNFT is
     function mint(uint256 _amount) public payable {
         require(paused == false, "Error: public mint is paused");
         require(id <= zeroPatientSupply, "Error: max supply reached");
-        require(
-            _amount <= maxNFTPublic && _amount > 0,
-            "Error: you can't mint more than max public supply and less than one"
-        );
-        require(
-            (id + _amount) <= zeroPatientSupply,
-            "Error: more than max supply will be reached"
-        );
-        require(
-            msg.value >= publicPrice * _amount,
-            "Error: insufficient funds"
-        );
+        require(_amount <= maxNFTPublic && _amount > 0, "Error: you can't mint more than max public supply and less than one");
+        require((id + _amount) <= zeroPatientSupply, "Error: more than max supply will be reached");
+        require(msg.value >= publicPrice * _amount, "Error: insufficient funds");
         for (uint256 i = 0; i < _amount; i++) {
             unchecked {
                 id++;
@@ -141,7 +114,7 @@ contract InfectedNFT is
         }
     }
 
-    function _infectedMint(uint256 _currentPatient) internal {
+    function _infectedMint(uint256 _currentPatient) virtual internal {
         require(paused == false, "Error: contract is paused");
         unchecked {
             infectedId++;
@@ -186,8 +159,7 @@ contract InfectedNFT is
         return admin;
     }
 
-    function contractURI() public view virtual returns (string memory) {
-        /**TODO: setter?? */
+    function contractURI() public view virtual returns (string memory) {/**TODO: setter?? */
         return (contractUri);
     }
 
@@ -195,19 +167,12 @@ contract InfectedNFT is
         /**TODO: splitter? */
     }
 
-    function sendValueCall(address payable recipient, uint256 amount)
-        public
-        virtual
-        onlyAdmin
-    {
+    function sendValueCall(address payable recipient, uint256 amount) public virtual onlyAdmin {
         AddressUpgradeable.sendValue(recipient, amount);
     }
 
     modifier onlyAdmin() {
-        require(
-            msg.sender == admin,
-            "Error: only admin can call this function"
-        );
+        require(msg.sender == admin, "Error: only admin can call this function");
         _;
     }
 }
