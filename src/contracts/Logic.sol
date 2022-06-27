@@ -67,6 +67,8 @@ contract InfectedNFT is
 
     uint256 public id;
 
+    uint256 public infectedId;
+
     bool public paused;
 
     uint256 public maxNFTPublic = 2;
@@ -86,6 +88,7 @@ contract InfectedNFT is
     {
         admin = msg.sender;
         id = 1;
+        infectedId = 101;
         paused = true;
         contractUri = _contractURI;
         __ERC1155_init(_metadata);
@@ -132,16 +135,19 @@ contract InfectedNFT is
             unchecked {
                 id++;
             }
-            _mint(msg.sender, (id - 1), 1, "");
+            uint128 _current = uint128(0 << 128);
+            uint256 _tokenId = _current + (id - 1);
+            _mint(msg.sender, _tokenId, 1, "");
         }
     }
 
     function _infectedMint(uint256 _currentPatient) internal {
         require(paused == false, "Error: contract is paused");
         unchecked {
-            id++;
+            infectedId++;
         }
-        uint256 _tokenId = zeroPatientSupply + _currentPatient + (id - 1);
+        uint128 _currentPatientId = uint128(_currentPatient << 128);
+        uint256 _tokenId = _currentPatientId + (infectedId - 1);
         _mint(msg.sender, _tokenId, 1, "");
         emit InfectedMint(_tokenId, _currentPatient);
     }
